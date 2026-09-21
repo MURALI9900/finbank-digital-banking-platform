@@ -42,13 +42,30 @@ public class AccountServiceImpl implements AccountService {
         String type=request.getType().trim().toUpperCase();
         if(!type.equals("DEPOSIT")&&!type.equals("WITHDRAWAL")&&!type.equals("TRANSFER"))
             throw new AccountOperationException("Unsupported balance transaction type");
-        if(type.equals("DEPOSIT")){credit(request.getDestinationAccountNumber(),request.getAmount(),request.getCurrency());return;}
-        if(type.equals("WITHDRAWAL")){debit(request.getSourceAccountNumber(),request.getAmount(),request.getCurrency());return;}
+        if(type.equals("DEPOSIT")){creditOwned(request.getDestinationAccountNumber(),request.getCustomerNumber(),request.getAmount(),request.getCurrency());return;}
+        if(type.equals("WITHDRAWAL")){debitOwned(request.getSourceAccountNumber(),request.getCustomerNumber(),request.getAmount(),request.getCurrency());return;}
         String source=request.getSourceAccountNumber().trim().toUpperCase();
         String destination=request.getDestinationAccountNumber().trim().toUpperCase();
         if(source.equals(destination)) throw new AccountOperationException("Source and destination accounts must be different");
-        debit(source,request.getAmount(),request.getCurrency());
+        debitOwned(source,request.getCustomerNumber(),request.getAmount(),request.getCurrency());
         credit(destination,request.getAmount(),request.getCurrency());
+    }
+
+    private void creditOwned(String number,String customerNumber,BigDecimal amount,String currency){
+        Account account=findActiveForUpdate(number);
+        validateOwnership(account,customerNumber);
+        validateCurrency(account,currency);
+        account.setBalance(account.getBalance().add(amount));
+        account.setAvailableBalance(account.getAvailableBalance().add(amount));
+    }
+
+    private void debitOwned(String number,String customerNumber,BigDecimal amount,String currency){
+        Account account=findActiveForUpdate(number);
+        validateOwnership(account,customerNumber);
+        validateCurrency(account,currency);
+        if(account.getAvailableBalance().compareTo(amount)<0) throw new AccountOperationException("Insufficient available balance");
+        account.setBalance(account.getBalance().subtract(amount));
+        account.setAvailableBalance(account.getAvailableBalance().subtract(amount));
     }
 
     private void credit(String number,BigDecimal amount,String currency){
@@ -72,6 +89,10 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(()->new AccountOperationException("Account not found: "+number));
         if(account.getStatus()!=AccountStatus.ACTIVE) throw new AccountOperationException("Account is not active: "+number);
         return account;
+    }
+
+    private void validateOwnership(Account account,String customerNumber){
+        if(customerNumber==null||!account.getCustomerNumber().equalsIgnoreCase(customerNumber.trim())) throw new AccountOperationException("Account does not belong to customer");
     }
 
     private void validateCurrency(Account account,String currency){
