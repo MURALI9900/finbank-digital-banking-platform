@@ -8,7 +8,6 @@ import com.finbank.transaction.repository.BankTransactionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
@@ -31,12 +30,13 @@ class TransactionServiceImplTest {
     @Mock private RestClient.RequestBodyUriSpec requestBodyUriSpec;
     @Mock private RestClient.RequestBodySpec requestBodySpec;
     @Mock private RestClient.ResponseSpec responseSpec;
-    @InjectMocks private TransactionServiceImpl service;
+    private TransactionServiceImpl service;
 
     @BeforeEach
     void setUp() {
         when(restClientBuilder.baseUrl(anyString())).thenReturn(restClientBuilder);
         when(restClientBuilder.build()).thenReturn(accountClient);
+        service = new TransactionServiceImpl(repository, org.mockito.Mockito.mock(org.springframework.kafka.core.KafkaTemplate.class), restClientBuilder, "http://localhost:8082");
     }
 
     @Test
