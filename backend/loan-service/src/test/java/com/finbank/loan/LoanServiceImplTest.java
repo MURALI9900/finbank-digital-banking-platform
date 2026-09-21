@@ -1,0 +1,5 @@
+package com.finbank.loan;
+import com.finbank.loan.dto.*;import com.finbank.loan.entity.*;import com.finbank.loan.repository.*;import com.finbank.loan.service.LoanServiceImpl;import org.junit.jupiter.api.Test;import org.mockito.Mockito;import java.math.BigDecimal;import static org.junit.jupiter.api.Assertions.*;
+class LoanServiceImplTest{
+ @Test void shouldApplyForLoan(){LoanApplicationRepository lr=Mockito.mock(LoanApplicationRepository.class);LoanRepaymentRepository rr=Mockito.mock(LoanRepaymentRepository.class);LoanServiceImpl s=new LoanServiceImpl(lr,rr);LoanApplication saved=new LoanApplication();saved.setApplicationReference("LOAN123");saved.setCustomerNumber("FB123");saved.setLoanType(LoanType.PERSONAL);saved.setStatus(LoanStatus.SUBMITTED);saved.setRequestedAmount(new BigDecimal("50000"));Mockito.when(lr.save(Mockito.any())).thenReturn(saved);LoanResponse r=s.apply(new CreateLoanRequest("FB123",LoanType.PERSONAL,new BigDecimal("50000"),24,new BigDecimal("10.5"),"Emergency"));assertEquals("LOAN123",r.applicationReference());assertEquals(LoanStatus.SUBMITTED,r.status());}
+}
