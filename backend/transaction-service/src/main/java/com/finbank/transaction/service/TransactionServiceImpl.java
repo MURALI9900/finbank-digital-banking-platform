@@ -1,18 +1,15 @@
 package com.finbank.transaction.service;
 
-import com.finbank.transaction.dto.CreateTransactionRequest;
-import com.finbank.transaction.dto.TransactionResponse;
-import com.finbank.transaction.entity.BankTransaction;
-import com.finbank.transaction.entity.TransactionStatus;
-import com.finbank.transaction.entity.TransactionType;
+import com.finbank.transaction.dto.*;
+import com.finbank.transaction.entity.*;
 import com.finbank.transaction.event.TransactionEvent;
-import com.finbank.transaction.exception.DuplicateTransactionException;
-import com.finbank.transaction.exception.InvalidTransactionException;
-import com.finbank.transaction.exception.TransactionNotFoundException;
+import com.finbank.transaction.exception.*;
 import com.finbank.transaction.repository.BankTransactionRepository;
+import org.springframework.http.*;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -20,23 +17,24 @@ import java.util.UUID;
 
 @Service
 public class TransactionServiceImpl implements TransactionService {
-    private static final String TOPIC = "finbank.transaction.events";
+    private static final String TOPIC="finbank.transaction.events";
     private final BankTransactionRepository repository;
-    private final KafkaTemplate<String, TransactionEvent> kafkaTemplate;
+    private final KafkaTemplate<String,TransactionEvent> kafkaTemplate;
+    private final RestClient accountClient;
 
-    public TransactionServiceImpl(BankTransactionRepository repository, KafkaTemplate<String, TransactionEvent> kafkaTemplate) {
-        this.repository = repository;
-        this.kafkaTemplate = kafkaTemplate;
+    public TransactionServiceImpl(BankTransactionRepository repository,KafkaTemplate<String,TransactionEvent> kafkaTemplate,
+                                  RestClient.Builder restClientBuilder){
+        this.repository=repository;
+        this.kafkaTemplate=kafkaTemplate;
+        this.accountClient=restClientBuilder.baseUrl("http://localhost:8082").build();
     }
 
-    @Override
-    @Transactional
-    public TransactionResponse createTransaction(CreateTransactionRequest request) {
-        if (repository.findByIdempotencyKey(request.idempotencyKey()).isPresent()) {
+    @Override @Transactional
+    public TransactionResponse createTransaction(CreateTransactionRequest request){
+        if(repository.findByIdempotencyKey(request.idempotencyKey()).isPresent())
             throw new DuplicateTransactionException("Transaction already exists for idempotency key");
-        }
         validateTransaction(request);
-        BankTransaction transaction = new BankTransaction();
+        BankTransaction transaction=new BankTransaction();
         transaction.setTransactionReference(generateReference());
         transaction.setIdempotencyKey(request.idempotencyKey().trim());
         transaction.setCustomerNumber(request.customerNumber().trim().toUpperCase());
@@ -47,41 +45,51 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setAmount(request.amount().setScale(2));
         transaction.setCurrency(request.currency().trim().toUpperCase());
         transaction.setDescription(normalize(request.description()));
-        BankTransaction saved = repository.save(transaction);
-        kafkaTemplate.send(TOPIC, saved.getTransactionReference(),
-                new TransactionEvent(saved.getTransactionReference(), saved.getCustomerNumber(),
-                        saved.getSourceAccountNumber(), saved.getDestinationAccountNumber(), saved.getType(),
-                        saved.getAmount(), saved.getCurrency(), saved.getDescription()));
-        return toResponse(saved);
+        BankTransaction saved=repository.save(transaction);
+        try{
+            accountClient.post().uri("/api/v1/accounts/internal/balance-transaction")
+                    .contentType(MediaType.APPLICATION_JSON).body(toBalanceRequest(saved)).retrieve().toBodilessEntity();
+            saved.setStatus(TransactionStatus.SUCCESS);
+        }catch(Exception ex){
+            saved.setStatus(TransactionStatus.FAILED);
+            repository.save(saved);
+            throw new InvalidTransactionException("Account balance operation failed: "+rootMessage(ex));
+        }
+        BankTransaction completed=repository.save(saved);
+        kafkaTemplate.send(TOPIC,completed.getTransactionReference(),
+                new TransactionEvent(completed.getTransactionReference(),completed.getCustomerNumber(),
+                        completed.getSourceAccountNumber(),completed.getDestinationAccountNumber(),completed.getType(),
+                        completed.getAmount(),completed.getCurrency(),completed.getDescription()));
+        return toResponse(completed);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public TransactionResponse getTransaction(String transactionReference) {
+    @Override @Transactional(readOnly=true)
+    public TransactionResponse getTransaction(String transactionReference){
         return toResponse(repository.findByTransactionReference(transactionReference)
-                .orElseThrow(() -> new TransactionNotFoundException("Transaction not found")));
+                .orElseThrow(()->new TransactionNotFoundException("Transaction not found")));
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<TransactionResponse> getCustomerTransactions(String customerNumber) {
-        return repository.findByCustomerNumberOrderByCreatedAtDesc(customerNumber.trim().toUpperCase())
-                .stream().map(this::toResponse).toList();
+    @Override @Transactional(readOnly=true)
+    public List<TransactionResponse> getCustomerTransactions(String customerNumber){
+        return repository.findByCustomerNumberOrderByCreatedAtDesc(customerNumber.trim().toUpperCase()).stream().map(this::toResponse).toList();
     }
 
-    private void validateTransaction(CreateTransactionRequest request) {
-        if (request.amount().compareTo(BigDecimal.ZERO) <= 0) throw new InvalidTransactionException("Amount must be greater than zero");
-        if (request.type() == TransactionType.DEPOSIT && request.destinationAccountNumber() == null) throw new InvalidTransactionException("Destination account is required for deposit");
-        if (request.type() == TransactionType.WITHDRAWAL && request.sourceAccountNumber() == null) throw new InvalidTransactionException("Source account is required for withdrawal");
-        if (request.type() == TransactionType.TRANSFER && (request.sourceAccountNumber() == null || request.destinationAccountNumber() == null)) throw new InvalidTransactionException("Source and destination accounts are required for transfer");
-        if (request.type() == TransactionType.TRANSFER && request.sourceAccountNumber().trim().equalsIgnoreCase(request.destinationAccountNumber().trim())) throw new InvalidTransactionException("Source and destination accounts must be different");
+    private BalanceTransactionPayload toBalanceRequest(BankTransaction t){
+        return new BalanceTransactionPayload(t.getTransactionReference(),t.getType().name(),t.getSourceAccountNumber(),
+                t.getDestinationAccountNumber(),t.getAmount(),t.getCurrency());
     }
 
-    private String generateReference() { return "FT" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase(); }
-    private String normalize(String value) { return value == null || value.isBlank() ? null : value.trim(); }
-    private TransactionResponse toResponse(BankTransaction t) {
-        return new TransactionResponse(t.getTransactionReference(), t.getIdempotencyKey(), t.getCustomerNumber(),
-                t.getSourceAccountNumber(), t.getDestinationAccountNumber(), t.getType(), t.getStatus(),
-                t.getAmount(), t.getCurrency(), t.getDescription(), t.getCreatedAt(), t.getUpdatedAt());
+    private void validateTransaction(CreateTransactionRequest request){
+        if(request.amount().compareTo(BigDecimal.ZERO)<=0) throw new InvalidTransactionException("Amount must be greater than zero");
+        if(request.type()==TransactionType.DEPOSIT&&request.destinationAccountNumber()==null) throw new InvalidTransactionException("Destination account is required for deposit");
+        if(request.type()==TransactionType.WITHDRAWAL&&request.sourceAccountNumber()==null) throw new InvalidTransactionException("Source account is required for withdrawal");
+        if(request.type()==TransactionType.TRANSFER&&(request.sourceAccountNumber()==null||request.destinationAccountNumber()==null)) throw new InvalidTransactionException("Source and destination accounts are required for transfer");
+        if(request.type()==TransactionType.TRANSFER&&request.sourceAccountNumber().trim().equalsIgnoreCase(request.destinationAccountNumber().trim())) throw new InvalidTransactionException("Source and destination accounts must be different");
     }
+    private String generateReference(){return "FT"+UUID.randomUUID().toString().replace("-","").substring(0,16).toUpperCase();}
+    private String normalize(String value){return value==null||value.isBlank()?null:value.trim();}
+    private String rootMessage(Exception ex){return ex.getMessage()==null?"unknown account error":ex.getMessage();}
+    private TransactionResponse toResponse(BankTransaction t){return new TransactionResponse(t.getTransactionReference(),t.getIdempotencyKey(),t.getCustomerNumber(),t.getSourceAccountNumber(),t.getDestinationAccountNumber(),t.getType(),t.getStatus(),t.getAmount(),t.getCurrency(),t.getDescription(),t.getCreatedAt(),t.getUpdatedAt());}
+
+    private record BalanceTransactionPayload(String transactionReference,String type,String sourceAccountNumber,String destinationAccountNumber,BigDecimal amount,String currency){}
 }
