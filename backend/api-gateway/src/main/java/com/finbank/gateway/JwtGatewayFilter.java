@@ -29,6 +29,7 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
         String path = exchange.getRequest().getURI().getPath();
         if (path.startsWith("/api/v1/auth/") || path.startsWith("/actuator/")) return chain.filter(exchange);
         if (path.startsWith("/api/v1/accounts/internal/")) return reject(exchange, HttpStatus.FORBIDDEN);
+        if (path.startsWith("/api/v1/") && isPublicNonAuthPath(path)) return reject(exchange, HttpStatus.FORBIDDEN);
         String header = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (header == null || !header.startsWith("Bearer ")) return reject(exchange, HttpStatus.UNAUTHORIZED);
         try {
@@ -39,6 +40,10 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
         } catch (Exception ex) {
             return reject(exchange, HttpStatus.UNAUTHORIZED);
         }
+    }
+
+    private boolean isPublicNonAuthPath(String path) {
+        return path.equals("/api/v1/auth");
     }
 
     private boolean isAllowed(String path, String role) {
