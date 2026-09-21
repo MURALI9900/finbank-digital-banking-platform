@@ -1,0 +1,3 @@
+package com.finbank.loan.dto;
+import com.finbank.loan.entity.*; import java.math.BigDecimal; import java.time.LocalDateTime;
+public record LoanResponse(String applicationReference,String customerNumber,LoanType loanType,LoanStatus status,BigDecimal requestedAmount,Integer tenureMonths,BigDecimal annualInterestRate,String purpose,String reviewedBy,String rejectionReason,LocalDateTime submittedAt,LocalDateTime reviewedAt,LocalDateTime disbursedAt){}
