@@ -29,7 +29,7 @@ class OfficerServiceImplTest {
     void setUp() {
         when(builder.baseUrl(anyString())).thenReturn(builder);
         when(builder.build()).thenReturn(beneficiaryClient, kycClient);
-        service = new OfficerServiceImpl(officerRepository, reviewRepository, builder, "http://localhost:8084", "http://localhost:8087");
+        service = new OfficerServiceImpl(officerRepository, reviewRepository, builder, "http://localhost:8084", "http://localhost:8087", "dev-internal-token");
     }
 
     @Test
