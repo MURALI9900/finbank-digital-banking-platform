@@ -3,9 +3,9 @@ spring:
     name: customer-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/finbank
-    username: finbank
-    password: finbank
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:finbank}
+    username: ${POSTGRES_USER:finbank}
+    password: ${POSTGRES_PASSWORD:finbank}
 
   jpa:
     hibernate:
