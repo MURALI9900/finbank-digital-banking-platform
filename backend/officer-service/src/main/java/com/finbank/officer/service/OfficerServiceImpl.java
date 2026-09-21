@@ -17,11 +17,12 @@ public class OfficerServiceImpl implements OfficerService {
     private final OfficerReviewRepository reviewRepository;
     private final RestClient beneficiaryClient;
     private final RestClient kycClient;
+    private final String internalServiceToken;
 
-    public OfficerServiceImpl(OfficerRepository officerRepository,OfficerReviewRepository reviewRepository,RestClient.Builder builder, @org.springframework.beans.factory.annotation.Value("${finbank.services.beneficiary-url:http://localhost:8084}") String beneficiaryServiceUrl, @org.springframework.beans.factory.annotation.Value("${finbank.services.kyc-url:http://localhost:8087}") String kycServiceUrl){
+    public OfficerServiceImpl(OfficerRepository officerRepository,OfficerReviewRepository reviewRepository,RestClient.Builder builder, @org.springframework.beans.factory.annotation.Value("${finbank.services.beneficiary-url:http://localhost:8084}") String beneficiaryServiceUrl, @org.springframework.beans.factory.annotation.Value("${finbank.services.kyc-url:http://localhost:8087}") String kycServiceUrl, @org.springframework.beans.factory.annotation.Value("${finbank.internal.service-token:dev-internal-token}") String internalServiceToken){
         this.officerRepository=officerRepository; this.reviewRepository=reviewRepository;
         this.beneficiaryClient=builder.baseUrl(beneficiaryServiceUrl).build();
-        this.kycClient=builder.baseUrl(kycServiceUrl).build();
+        this.kycClient=builder.baseUrl(kycServiceUrl).build(); this.internalServiceToken=internalServiceToken;
     }
 
     @Override @Transactional
@@ -58,11 +59,11 @@ public class OfficerServiceImpl implements OfficerService {
         ReviewResponse response=toReviewResponse(reviewRepository.save(r));
         try{
             if("BENEFICIARY".equalsIgnoreCase(r.getReviewType())&&r.getTargetReference()!=null)
-                beneficiaryClient.put().uri("/api/v1/beneficiaries/{reference}/decision",r.getTargetReference())
-                    .contentType(MediaType.APPLICATION_JSON).body(new Decision(request.status().name(),request.remarks())).retrieve().toBodilessEntity();
+                beneficiaryClient.put().uri("/api/v1/beneficiaries/internal/{reference}/decision",r.getTargetReference())
+                    .header("X-Service-Token", internalServiceToken).contentType(MediaType.APPLICATION_JSON).body(new Decision(request.status().name(),request.remarks())).retrieve().toBodilessEntity();
             if("KYC".equalsIgnoreCase(r.getReviewType())&&r.getTargetReference()!=null)
-                kycClient.put().uri("/api/v1/kyc/applications/{reference}/review",r.getTargetReference())
-                    .contentType(MediaType.APPLICATION_JSON).body(new KycDecision(request.status().name().equals("APPROVED")?"VERIFIED":"REJECTED",r.getOfficerCode(),request.remarks())).retrieve().toBodilessEntity();
+                kycClient.put().uri("/api/v1/kyc/applications/internal/{reference}/review",r.getTargetReference())
+                    .header("X-Service-Token", internalServiceToken).contentType(MediaType.APPLICATION_JSON).body(new KycDecision(request.status().name().equals("APPROVED")?"VERIFIED":"REJECTED",r.getOfficerCode(),request.remarks())).retrieve().toBodilessEntity();
         }catch(Exception ex){throw new OfficerException("Review target update failed: "+(ex.getMessage()==null?"unknown error":ex.getMessage()));}
         return response;
     }
