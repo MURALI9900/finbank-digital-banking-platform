@@ -58,6 +58,7 @@ class TransactionServiceImplTest {
     void shouldCreateTransaction() {
         when(repository.findByIdempotencyKey("KEY-2")).thenReturn(Optional.empty());
         when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(outboxRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(accountClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri("/api/v1/accounts/internal/balance-transaction")).thenReturn(requestBodySpec);
