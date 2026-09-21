@@ -12,8 +12,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/kyc")
 public class KycController {
-    private final KycService kycService;
-    public KycController(KycService kycService) { this.kycService = kycService; }
+    private final KycService kycService;\n    private final String internalServiceToken;
+    public KycController(KycService kycService, @org.springframework.beans.factory.annotation.Value("${finbank.internal.service-token}") String internalServiceToken) { this.kycService = kycService; this.internalServiceToken = internalServiceToken; }
 
     @PostMapping("/applications")
     @ResponseStatus(HttpStatus.CREATED)
@@ -37,7 +37,7 @@ public class KycController {
         return kycService.submitApplication(reference);
     }
 
-    @PutMapping("/applications/{reference}/review")
+    @PutMapping("/applications/internal/{reference}/review")\n    public KycResponse internalReview(@PathVariable String reference, @RequestHeader(value = "X-Service-Token", required = false) String serviceToken, @Valid @RequestBody ReviewKycRequest request) {\n        if(serviceToken==null || !serviceToken.equals(internalServiceToken)) throw new AccessDeniedException("Internal service authentication required");\n        return kycService.reviewApplication(reference, request);\n    }\n\n    @PutMapping("/applications/{reference}/review")
     public KycResponse review(@PathVariable String reference, @Valid @RequestBody ReviewKycRequest request, Authentication authentication) {
         requireOfficerOrAdmin(authentication);
         return kycService.reviewApplication(reference, request);
