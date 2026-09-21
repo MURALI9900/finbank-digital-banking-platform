@@ -22,14 +22,20 @@ public class JwtService {
     }
 
     public String generateToken(String username, String role) {
+        return generateToken(username, role, null);
+    }
+
+    public String generateToken(String username, String role, String customerNumber) {
         Date now = new Date();
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(username)
                 .claim("role", role)
                 .issuedAt(now)
-                .expiration(new Date(now.getTime() + expirationMs))
-                .signWith(key)
-                .compact();
+                .expiration(new Date(now.getTime() + expirationMs));
+        if (customerNumber != null && !customerNumber.isBlank()) {
+            builder.claim("customerNumber", customerNumber);
+        }
+        return builder.signWith(key).compact();
     }
 
     public Claims parseToken(String token) {
