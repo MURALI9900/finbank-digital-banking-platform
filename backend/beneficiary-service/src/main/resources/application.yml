@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: beneficiary-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/finbank
+    username: finbank
+    password: finbank
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: 8084
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
