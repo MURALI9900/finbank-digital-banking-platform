@@ -48,6 +48,7 @@ class TransactionOutboxPublisherTest {
         KafkaTemplate<String, TransactionEvent> kafkaTemplate = mock(KafkaTemplate.class);
 
         TransactionOutbox outbox = new TransactionOutbox();
+        outbox.setStatus(OutboxStatus.PENDING);
         outbox.setTransactionReference("FT124");
         outbox.setCustomerNumber("C001");
         outbox.setType(TransactionType.DEPOSIT.name());
