@@ -7,12 +7,15 @@ import java.math.BigDecimal;
 
 public class BalanceTransactionRequest {
     @NotBlank private String transactionReference;
+    @NotBlank private String customerNumber;
     @NotBlank private String type;
     private String sourceAccountNumber;
     private String destinationAccountNumber;
     @NotNull @DecimalMin("0.01") private BigDecimal amount;
     @NotBlank private String currency;
     public String getTransactionReference(){return transactionReference;}
+    public String getCustomerNumber(){return customerNumber;}
+    public void setCustomerNumber(String v){customerNumber=v;}
     public void setTransactionReference(String v){transactionReference=v;}
     public String getType(){return type;}
     public void setType(String v){type=v;}
