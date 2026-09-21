@@ -13,7 +13,8 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/accounts")
 public class AccountController {
     private final AccountService accountService;
-    public AccountController(AccountService accountService){this.accountService=accountService;}
+    private final String internalServiceToken;
+    public AccountController(AccountService accountService, @org.springframework.beans.factory.annotation.Value("${finbank.internal.service-token}") String internalServiceToken){this.accountService=accountService; this.internalServiceToken=internalServiceToken;}
 
     @PostMapping
     public ResponseEntity<AccountResponse> createAccount(@Valid @RequestBody CreateAccountRequest request, Authentication authentication){
@@ -39,7 +40,7 @@ public class AccountController {
 
     @PostMapping("/internal/balance-transaction")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void applyBalanceTransaction(@Valid @RequestBody BalanceTransactionRequest request){accountService.applyBalanceTransaction(request);}
+    public void applyBalanceTransaction(@RequestHeader(value = "X-Service-Token", required = false) String serviceToken, @Valid @RequestBody BalanceTransactionRequest request){\n        if(serviceToken==null || !serviceToken.equals(internalServiceToken)) throw new AccessDeniedException("Internal service authentication required");\n        accountService.applyBalanceTransaction(request);\n    }
 
     private boolean isCustomer(Authentication authentication){return authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"));}
     private String customer(Authentication authentication){
