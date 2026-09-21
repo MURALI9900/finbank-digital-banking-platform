@@ -15,7 +15,7 @@ server:
 
 app:
   jwt:
-    secret: finbank-development-secret-key-change-in-production-256-bits
+    secret: ${FINBANK_JWT_SECRET:finbank-development-secret-key-change-in-production-256-bits}
     expiration-ms: 3600000
 
 management:
