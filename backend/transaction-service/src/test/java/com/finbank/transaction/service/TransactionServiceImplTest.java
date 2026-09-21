@@ -11,6 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.MediaType;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
@@ -27,6 +28,9 @@ class TransactionServiceImplTest {
     @Mock private BankTransactionRepository repository;
     @Mock private RestClient.Builder restClientBuilder;
     @Mock private RestClient accountClient;
+    @Mock private RestClient.RequestBodyUriSpec requestBodyUriSpec;
+    @Mock private RestClient.RequestBodySpec requestBodySpec;
+    @Mock private RestClient.ResponseSpec responseSpec;
     @InjectMocks private TransactionServiceImpl service;
 
     @BeforeEach
@@ -48,11 +52,19 @@ class TransactionServiceImplTest {
     void shouldCreateTransaction() {
         when(repository.findByIdempotencyKey("KEY-2")).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(accountClient.post()).thenReturn(null);
+        when(accountClient.post()).thenReturn(requestBodyUriSpec);
+        when(requestBodyUriSpec.uri("/api/v1/accounts/internal/balance-transaction")).thenReturn(requestBodySpec);
+        when(requestBodySpec.contentType(MediaType.APPLICATION_JSON)).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any())).thenReturn(requestBodySpec);
+        when(requestBodySpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.toBodilessEntity()).thenReturn(null);
+
         CreateTransactionRequest request = new CreateTransactionRequest(
                 "FB100", null, "FBACC1", TransactionType.DEPOSIT,
                 new BigDecimal("500.00"), "INR", "Cash deposit", "KEY-2");
+
         var response = service.createTransaction(request);
+
         assertEquals(TransactionType.DEPOSIT, response.type());
         assertEquals(new BigDecimal("500.00"), response.amount());
     }
