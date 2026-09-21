@@ -9,8 +9,14 @@ spring:
     hibernate:
       ddl-auto: update
     open-in-view: false
+
 server:
   port: 8088
+
+finbank:
+  services:
+    transaction-url: http://localhost:8083
+
 management:
   endpoints:
     web:
