@@ -21,6 +21,8 @@ server:
   port: 8083
 
 finbank:
+  internal:
+    service-token: ${FINBANK_INTERNAL_SERVICE_TOKEN:dev-internal-token}
   services:
     account-url: ${FINBANK_ACCOUNT_SERVICE_URL:http://localhost:8082}
 
