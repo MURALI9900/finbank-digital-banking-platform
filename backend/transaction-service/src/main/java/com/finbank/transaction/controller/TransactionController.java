@@ -14,7 +14,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/transactions")
 public class TransactionController {
-    private final TransactionService service;
+    private final TransactionService service;\n    private final String internalServiceToken;
     public TransactionController(TransactionService service){this.service=service;}
 
     @PostMapping
