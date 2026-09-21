@@ -5,12 +5,14 @@ import com.finbank.transaction.entity.BankTransaction;
 import com.finbank.transaction.entity.TransactionType;
 import com.finbank.transaction.exception.DuplicateTransactionException;
 import com.finbank.transaction.repository.BankTransactionRepository;
+import com.finbank.transaction.repository.TransactionOutboxRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
@@ -25,6 +27,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TransactionServiceImplTest {
     @Mock private BankTransactionRepository repository;
+    @Mock private TransactionOutboxRepository outboxRepository;
+    @Mock private KafkaTemplate<String, com.finbank.transaction.event.TransactionEvent> kafkaTemplate;
     @Mock private RestClient.Builder restClientBuilder;
     @Mock private RestClient accountClient;
     @Mock private RestClient.RequestBodyUriSpec requestBodyUriSpec;
@@ -36,7 +40,9 @@ class TransactionServiceImplTest {
     void setUp() {
         when(restClientBuilder.baseUrl(anyString())).thenReturn(restClientBuilder);
         when(restClientBuilder.build()).thenReturn(accountClient);
-        service = new TransactionServiceImpl(repository, org.mockito.Mockito.mock(org.springframework.kafka.core.KafkaTemplate.class), restClientBuilder, "http://localhost:8082");
+        service = new TransactionServiceImpl(
+                repository, kafkaTemplate, restClientBuilder, outboxRepository,
+                "http://localhost:8082", "dev-internal-token");
     }
 
     @Test
@@ -52,9 +58,11 @@ class TransactionServiceImplTest {
     void shouldCreateTransaction() {
         when(repository.findByIdempotencyKey("KEY-2")).thenReturn(Optional.empty());
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(outboxRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(accountClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri("/api/v1/accounts/internal/balance-transaction")).thenReturn(requestBodySpec);
         when(requestBodySpec.contentType(MediaType.APPLICATION_JSON)).thenReturn(requestBodySpec);
+        when(requestBodySpec.header(anyString(), anyString())).thenReturn(requestBodySpec);
         when(requestBodySpec.body(any(Object.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.toBodilessEntity()).thenReturn(null);
