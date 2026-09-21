@@ -1,6 +1,4 @@
 spring:
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   application:
     name: transaction-service
   datasource:
@@ -16,15 +14,18 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
 server:
   port: 8083
+
+finbank:
+  services:
+    account-url: ${FINBANK_ACCOUNT_SERVICE_URL:http://localhost:8082}
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info
-spring:
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
