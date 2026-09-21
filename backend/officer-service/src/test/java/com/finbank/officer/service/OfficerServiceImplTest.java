@@ -8,7 +8,6 @@ import com.finbank.officer.repository.OfficerReviewRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.client.RestClient;
@@ -24,12 +23,13 @@ class OfficerServiceImplTest {
     @Mock RestClient.Builder builder;
     @Mock RestClient beneficiaryClient;
     @Mock RestClient kycClient;
-    @InjectMocks OfficerServiceImpl service;
+    private OfficerServiceImpl service;
 
     @BeforeEach
     void setUp() {
         when(builder.baseUrl(anyString())).thenReturn(builder);
         when(builder.build()).thenReturn(beneficiaryClient, kycClient);
+        service = new OfficerServiceImpl(officerRepository, reviewRepository, builder, "http://localhost:8084", "http://localhost:8087");
     }
 
     @Test
