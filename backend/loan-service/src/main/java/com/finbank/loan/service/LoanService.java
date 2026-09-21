@@ -12,4 +12,5 @@ public interface LoanService {
     RepaymentResponse createRepayment(RepaymentRequest r);
     RepaymentResponse pay(String ref, PaymentRequest r);
     List<RepaymentResponse> repayments(String loanRef);
+    String repaymentLoanReference(String repaymentReference);
 }
