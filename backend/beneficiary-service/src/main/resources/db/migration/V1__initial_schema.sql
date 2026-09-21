@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS beneficiaries (id bigserial primary key, beneficiary_reference varchar(30) not null unique, customer_number varchar(20) not null, account_number varchar(30) not null, beneficiary_name varchar(100) not null, bank_name varchar(100), status varchar(20) not null, created_at timestamp not null, updated_at timestamp not null);
