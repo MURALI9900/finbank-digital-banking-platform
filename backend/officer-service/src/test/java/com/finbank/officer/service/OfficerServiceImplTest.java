@@ -28,7 +28,7 @@ class OfficerServiceImplTest {
         officer.setStatus(OfficerStatus.ACTIVE);
         when(officerRepository.findByOfficerCode("OFF001")).thenReturn(java.util.Optional.of(officer));
         when(reviewRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        var response = service.createReview(new CreateReviewRequest("FB100", "KYC", "Verify identity", "OFF001"));
+        var response = service.createReview(new CreateReviewRequest("FB100", "KYC", null, "Verify identity", "OFF001"));
         assertEquals("FB100", response.customerNumber());
         assertEquals("KYC", response.reviewType());
     }
