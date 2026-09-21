@@ -132,6 +132,13 @@ public class LoanServiceImpl implements LoanService {
                 .map(this::toRepaymentResponse).toList();
     }
 
+    @Override
+    public String repaymentLoanReference(String repaymentReference) {
+        return repaymentRepository.findByRepaymentReference(repaymentReference)
+                .map(LoanRepayment::getLoanReference)
+                .orElseThrow(() -> new LoanException("Repayment not found"));
+    }
+
     private TransactionResponse createTransaction(TransactionRequest request) {
         return transactionClient.post().uri("/api/v1/transactions")
                 .contentType(MediaType.APPLICATION_JSON).body(request).retrieve()
