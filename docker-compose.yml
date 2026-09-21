@@ -97,6 +97,7 @@ services:
     build: { context: ., args: { SERVICE: officer-service } }
     environment:
       POSTGRES_HOST: postgres
+      FINBANK_JWT_SECRET: ${FINBANK_JWT_SECRET:-finbank-development-secret-key-change-in-production-256-bits}
       FINBANK_BENEFICIARY_SERVICE_URL: http://beneficiary-service:8084
       FINBANK_KYC_SERVICE_URL: http://kyc-service:8087
       FINBANK_INTERNAL_SERVICE_TOKEN: ${FINBANK_INTERNAL_SERVICE_TOKEN:-dev-internal-token}
