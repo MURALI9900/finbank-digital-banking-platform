@@ -13,7 +13,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.client.RestClient;
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -25,12 +24,16 @@ public class TransactionServiceImpl implements TransactionService {
     private final KafkaTemplate<String,TransactionEvent> kafkaTemplate;
     private final RestClient accountClient;
     private final TransactionOutboxRepository outboxRepository;
+    private final String internalServiceToken;
 
     public TransactionServiceImpl(BankTransactionRepository repository,KafkaTemplate<String,TransactionEvent> kafkaTemplate,
-                                  RestClient.Builder restClientBuilder, TransactionOutboxRepository outboxRepository, @org.springframework.beans.factory.annotation.Value("${finbank.services.account-url:http://localhost:8082}") String accountServiceUrl){
+                                  RestClient.Builder restClientBuilder, TransactionOutboxRepository outboxRepository,
+                                  @org.springframework.beans.factory.annotation.Value("${finbank.services.account-url:http://localhost:8082}") String accountServiceUrl,
+                                  @org.springframework.beans.factory.annotation.Value("${finbank.internal.service-token:dev-internal-token}") String internalServiceToken){
         this.repository=repository;
         this.kafkaTemplate=kafkaTemplate;
         this.outboxRepository=outboxRepository;
+        this.internalServiceToken=internalServiceToken;
         this.accountClient=restClientBuilder.baseUrl(accountServiceUrl).build();
     }
 
@@ -57,7 +60,8 @@ public class TransactionServiceImpl implements TransactionService {
             throw new DuplicateTransactionException("Transaction already exists for idempotency key");
         }
         try{
-            accountClient.post().uri("/api/v1/accounts/internal/balance-transaction")\n                    .header("X-Service-Token", internalServiceToken)
+            accountClient.post().uri("/api/v1/accounts/internal/balance-transaction")
+                    .header("X-Service-Token", internalServiceToken)
                     .contentType(MediaType.APPLICATION_JSON).body(toBalanceRequest(saved)).retrieve().toBodilessEntity();
             saved.setStatus(TransactionStatus.SUCCESS);
         }catch(Exception ex){
@@ -106,6 +110,5 @@ public class TransactionServiceImpl implements TransactionService {
     private String normalize(String value){return value==null||value.isBlank()?null:value.trim();}
     private String rootMessage(Exception ex){return ex.getMessage()==null?"unknown account error":ex.getMessage();}
     private TransactionResponse toResponse(BankTransaction t){return new TransactionResponse(t.getTransactionReference(),t.getIdempotencyKey(),t.getCustomerNumber(),t.getSourceAccountNumber(),t.getDestinationAccountNumber(),t.getType(),t.getStatus(),t.getAmount(),t.getCurrency(),t.getDescription(),t.getCreatedAt(),t.getUpdatedAt());}
-
     private record BalanceTransactionPayload(String transactionReference,String type,String sourceAccountNumber,String destinationAccountNumber,BigDecimal amount,String currency){}
 }
