@@ -34,7 +34,7 @@ public class AuthServiceImpl implements AuthService {
         UserAccount user = new UserAccount();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(request.password()));
-        user.setRole(request.role());
+        user.setRole(com.finbank.auth.entity.Role.CUSTOMER);
         user.setCustomerNumber(request.customerNumber() == null || request.customerNumber().isBlank() ? null : request.customerNumber().trim());
         user.setStatus(UserStatus.ACTIVE);
         repository.save(user);
