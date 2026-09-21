@@ -12,7 +12,7 @@ export interface Ticket { ticketReference:string; customerNumber:string; request
 
 @Injectable({providedIn:'root'})
 export class ApiService {
- private http=inject(HttpClient); private base='http://localhost:8080/api/v1';
+ private http=inject(HttpClient); private base='/api/v1';
  accounts(c:string){return this.http.get<Account[]>(this.base+'/accounts/customer/'+encodeURIComponent(c));}
  transactions(c:string){return this.http.get<Transaction[]>(this.base+'/transactions/customer/'+encodeURIComponent(c));}
  createTransaction(b:any){return this.http.post<Transaction>(this.base+'/transactions',b);}
