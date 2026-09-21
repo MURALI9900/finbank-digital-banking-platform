@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS bank_officers (id bigserial PRIMARY KEY, officer_code varchar(30) NOT NULL UNIQUE, full_name varchar(120) NOT NULL, email varchar(120) NOT NULL UNIQUE, branch_code varchar(120) NOT NULL, status varchar(20) NOT NULL, created_at timestamp NOT NULL);
