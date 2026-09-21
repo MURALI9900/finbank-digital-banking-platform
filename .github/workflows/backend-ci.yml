@@ -48,3 +48,34 @@ jobs:
           cache: maven
       - name: Build and test
         run: mvn -B test
+  docker-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate Docker Compose
+        run: docker compose config --quiet
+
+  docker-build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - customer-service
+          - account-service
+          - transaction-service
+          - beneficiary-service
+          - auth-service
+          - officer-service
+          - kyc-service
+          - loan-service
+          - support-service
+          - notification-service
+          - audit-service
+          - api-gateway
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build --build-arg SERVICE=${{ matrix.service }} -t finbank/${{ matrix.service }}:ci .
