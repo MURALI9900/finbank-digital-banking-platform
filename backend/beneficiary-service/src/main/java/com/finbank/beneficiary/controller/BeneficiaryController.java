@@ -12,7 +12,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/beneficiaries")
 public class BeneficiaryController {
-    private final BeneficiaryService service;\n    private final String internalServiceToken;
+    private final BeneficiaryService service;
+    private final String internalServiceToken;
     public BeneficiaryController(BeneficiaryService service, @org.springframework.beans.factory.annotation.Value("${finbank.internal.service-token}") String internalServiceToken){this.service=service; this.internalServiceToken=internalServiceToken;}
 
     @PostMapping @ResponseStatus(HttpStatus.CREATED)
@@ -37,7 +38,13 @@ public class BeneficiaryController {
         return service.getCustomerBeneficiaries(customerNumber);
     }
 
-    @PutMapping("/internal/{reference}/decision")\n    public BeneficiaryResponse internalDecide(@PathVariable String reference, @RequestHeader(value = "X-Service-Token", required = false) String serviceToken, @Valid @RequestBody BeneficiaryDecisionRequest request){\n        if(serviceToken==null || !serviceToken.equals(internalServiceToken)) throw new AccessDeniedException("Internal service authentication required");\n        return service.decideBeneficiary(reference,request);\n    }\n\n    @PutMapping("/{reference}/decision")
+    @PutMapping("/internal/{reference}/decision")
+    public BeneficiaryResponse internalDecide(@PathVariable String reference, @RequestHeader(value = "X-Service-Token", required = false) String serviceToken, @Valid @RequestBody BeneficiaryDecisionRequest request){
+        if(serviceToken==null || !serviceToken.equals(internalServiceToken)) throw new AccessDeniedException("Internal service authentication required");
+        return service.decideBeneficiary(reference,request);
+    }
+
+    @PutMapping("/{reference}/decision")
     public BeneficiaryResponse decide(@PathVariable String reference,@Valid @RequestBody BeneficiaryDecisionRequest request, Authentication authentication){
         if(!hasOfficerRole(authentication)) throw new AccessDeniedException("Only officers can decide beneficiaries");
         return service.decideBeneficiary(reference,request);
