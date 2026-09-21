@@ -1,6 +1,7 @@
 # Multi-service build image for the FinBank backend.
 ARG SERVICE
 FROM maven:3.9.11-eclipse-temurin-17 AS build
+ARG SERVICE
 WORKDIR /workspace
 COPY backend/$SERVICE/pom.xml backend/$SERVICE/pom.xml
 COPY backend/$SERVICE/src backend/$SERVICE/src
