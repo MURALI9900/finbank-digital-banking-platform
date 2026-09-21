@@ -1,5 +1,6 @@
 package com.finbank.audit.service;
 
+import com.finbank.audit.dto.AuditResponse;
 import com.finbank.audit.dto.CreateAuditRequest;
 import com.finbank.audit.entity.*;
 import com.finbank.audit.repository.AuditEventRepository;
