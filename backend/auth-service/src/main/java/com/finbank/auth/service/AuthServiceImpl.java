@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class AuthServiceImpl implements AuthService {
     private final UserAccountRepository repository;
     private final PasswordEncoder passwordEncoder;
@@ -25,7 +26,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional
     public void register(RegisterRequest request) {
         String username = request.username().trim().toLowerCase();
         if (repository.existsByUsername(username)) {
@@ -48,7 +48,7 @@ public class AuthServiceImpl implements AuthService {
         if (user.getStatus() != UserStatus.ACTIVE || !passwordEncoder.matches(request.password(), user.getPassword())) {
             throw new AuthException("Invalid username or password");
         }
-        String token = jwtService.generateToken(user.getUsername(), user.getRole().name());
+        String token = jwtService.generateToken(user.getUsername(), user.getRole().name(), user.getCustomerNumber());
         return new AuthResponse(token, "Bearer", jwtService.getExpirationMs() / 1000, user.getUsername(), user.getRole().name());
     }
 }
