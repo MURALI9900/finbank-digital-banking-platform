@@ -8,13 +8,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/transactions")
 public class TransactionController {
-    private final TransactionService service;\n    private final String internalServiceToken;
+    private final TransactionService service;
     public TransactionController(TransactionService service){this.service=service;}
 
     @PostMapping
