@@ -100,6 +100,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private void validateTransaction(CreateTransactionRequest request){
+        if(request.type()==TransactionType.BILL_PAYMENT) throw new InvalidTransactionException("BILL_PAYMENT is not supported yet");
         if(request.amount().compareTo(BigDecimal.ZERO)<=0) throw new InvalidTransactionException("Amount must be greater than zero");
         if(request.type()==TransactionType.DEPOSIT&&request.destinationAccountNumber()==null) throw new InvalidTransactionException("Destination account is required for deposit");
         if(request.type()==TransactionType.WITHDRAWAL&&request.sourceAccountNumber()==null) throw new InvalidTransactionException("Source account is required for withdrawal");
