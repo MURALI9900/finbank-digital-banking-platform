@@ -5,9 +5,11 @@ import com.finbank.transaction.entity.*;
 import com.finbank.transaction.event.TransactionEvent;
 import com.finbank.transaction.exception.*;
 import com.finbank.transaction.repository.BankTransactionRepository;
+import com.finbank.transaction.repository.TransactionOutboxRepository;
 import org.springframework.http.*;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.client.RestClient;
@@ -22,11 +24,13 @@ public class TransactionServiceImpl implements TransactionService {
     private final BankTransactionRepository repository;
     private final KafkaTemplate<String,TransactionEvent> kafkaTemplate;
     private final RestClient accountClient;
+    private final TransactionOutboxRepository outboxRepository;
 
     public TransactionServiceImpl(BankTransactionRepository repository,KafkaTemplate<String,TransactionEvent> kafkaTemplate,
-                                  RestClient.Builder restClientBuilder,@org.springframework.beans.factory.annotation.Value("${finbank.services.account-url:http://localhost:8082}") String accountServiceUrl){
+                                  RestClient.Builder restClientBuilder, TransactionOutboxRepository outboxRepository, @org.springframework.beans.factory.annotation.Value("${finbank.services.account-url:http://localhost:8082}") String accountServiceUrl){
         this.repository=repository;
         this.kafkaTemplate=kafkaTemplate;
+        this.outboxRepository=outboxRepository;
         this.accountClient=restClientBuilder.baseUrl(accountServiceUrl).build();
     }
 
@@ -62,10 +66,16 @@ public class TransactionServiceImpl implements TransactionService {
             throw new InvalidTransactionException("Account balance operation failed: "+rootMessage(ex));
         }
         BankTransaction completed=repository.save(saved);
-        kafkaTemplate.send(TOPIC,completed.getTransactionReference(),
-                new TransactionEvent(completed.getTransactionReference(),completed.getCustomerNumber(),
-                        completed.getSourceAccountNumber(),completed.getDestinationAccountNumber(),completed.getType(),
-                        completed.getAmount(),completed.getCurrency(),completed.getDescription()));
+        TransactionOutbox outbox = new TransactionOutbox();
+        outbox.setTransactionReference(completed.getTransactionReference());
+        outbox.setCustomerNumber(completed.getCustomerNumber());
+        outbox.setSourceAccountNumber(completed.getSourceAccountNumber());
+        outbox.setDestinationAccountNumber(completed.getDestinationAccountNumber());
+        outbox.setType(completed.getType().name());
+        outbox.setAmount(completed.getAmount());
+        outbox.setCurrency(completed.getCurrency());
+        outbox.setDescription(completed.getDescription());
+        outboxRepository.save(outbox);
         return toResponse(completed);
     }
 
