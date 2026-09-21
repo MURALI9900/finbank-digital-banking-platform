@@ -9,6 +9,7 @@ import org.springframework.http.*;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
@@ -45,7 +46,12 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setAmount(request.amount().setScale(2));
         transaction.setCurrency(request.currency().trim().toUpperCase());
         transaction.setDescription(normalize(request.description()));
-        BankTransaction saved=repository.save(transaction);
+        BankTransaction saved;
+        try {
+            saved=repository.saveAndFlush(transaction);
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateTransactionException("Transaction already exists for idempotency key");
+        }
         try{
             accountClient.post().uri("/api/v1/accounts/internal/balance-transaction")
                     .contentType(MediaType.APPLICATION_JSON).body(toBalanceRequest(saved)).retrieve().toBodilessEntity();
