@@ -6,6 +6,7 @@ import com.finbank.loan.exception.LoanException;
 import com.finbank.loan.repository.LoanApplicationRepository;
 import com.finbank.loan.repository.LoanRepaymentRepository;
 import org.springframework.http.MediaType;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -106,23 +107,27 @@ public class LoanServiceImpl implements LoanService {
     }
 
     @Override
+    @Transactional
     public RepaymentResponse pay(String ref, PaymentRequest r) {
-        LoanRepayment repayment = repaymentRepository.findByRepaymentReference(ref)
+        LoanRepayment repayment = repaymentRepository.findByRepaymentReferenceForUpdate(ref)
                 .orElseThrow(() -> new LoanException("Repayment not found"));
         LoanApplication loan = findLoan(repayment.getLoanReference());
         if (loan.getStatus() != LoanStatus.DISBURSED) throw new LoanException("Loan is not open for repayment");
         if (repayment.getStatus() == RepaymentStatus.PAID) throw new LoanException("Repayment is already paid");
         if (r.sourceAccountNumber() == null || r.sourceAccountNumber().isBlank())
             throw new LoanException("Source account number is required");
-        if (r.amount().compareTo(repayment.getDueAmount()) > 0) throw new LoanException("Payment cannot exceed due amount");
+        BigDecimal remainingAmount = repayment.getDueAmount().subtract(repayment.getPaidAmount());
+        if (remainingAmount.compareTo(BigDecimal.ZERO) <= 0) throw new LoanException("Repayment is already fully paid");
+        if (r.amount().compareTo(remainingAmount) > 0) throw new LoanException("Payment cannot exceed remaining amount");
         TransactionResponse transaction = createTransaction(new TransactionRequest(
                 loan.getCustomerNumber(), r.sourceAccountNumber().trim(), null, "WITHDRAWAL",
                 r.amount(), r.currency().trim().toUpperCase(),
                 "Loan repayment " + repayment.getRepaymentReference(), "LOAN-REPAY-" + repayment.getRepaymentReference()));
         if (!"SUCCESS".equals(transaction.status())) throw new LoanException("Loan repayment transaction failed");
-        repayment.setPaidAmount(r.amount().setScale(2));
+        BigDecimal newPaidAmount = repayment.getPaidAmount().add(r.amount()).setScale(2);
+        repayment.setPaidAmount(newPaidAmount);
         repayment.setPaidDate(LocalDate.now());
-        repayment.setStatus(r.amount().compareTo(repayment.getDueAmount()) == 0 ? RepaymentStatus.PAID : RepaymentStatus.PARTIAL);
+        repayment.setStatus(newPaidAmount.compareTo(repayment.getDueAmount()) == 0 ? RepaymentStatus.PAID : RepaymentStatus.PARTIAL);
         return toRepaymentResponse(repaymentRepository.save(repayment));
     }
 
