@@ -1,0 +1,3 @@
+package com.finbank.support.repository;
+import com.finbank.support.entity.*;import org.springframework.data.jpa.repository.JpaRepository;import java.util.*;
+public interface SupportTicketRepository extends JpaRepository<SupportTicket,Long>{Optional<SupportTicket> findByTicketReference(String reference);List<SupportTicket> findByCustomerNumberOrderByCreatedAtDesc(String customerNumber);List<SupportTicket> findByStatusOrderByCreatedAtAsc(SupportStatus status);}
