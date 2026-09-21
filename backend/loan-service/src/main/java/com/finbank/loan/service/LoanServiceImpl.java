@@ -119,7 +119,7 @@ public class LoanServiceImpl implements LoanService {
                 loan.getCustomerNumber(), r.sourceAccountNumber().trim(), null, "WITHDRAWAL",
                 r.amount(), r.currency().trim().toUpperCase(),
                 "Loan repayment " + repayment.getRepaymentReference(), "LOAN-REPAY-" + repayment.getRepaymentReference()));
-        if (!"SUCCESS".equals(transaction.status().name())) throw new LoanException("Loan repayment transaction failed");
+        if (!"SUCCESS".equals(transaction.status())) throw new LoanException("Loan repayment transaction failed");
         repayment.setPaidAmount(r.amount().setScale(2));
         repayment.setPaidDate(LocalDate.now());
         repayment.setStatus(r.amount().compareTo(repayment.getDueAmount()) == 0 ? RepaymentStatus.PAID : RepaymentStatus.PARTIAL);
