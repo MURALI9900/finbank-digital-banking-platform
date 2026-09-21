@@ -1,12 +1,12 @@
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   application:
     name: transaction-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/finbank
-    username: finbank
-    password: finbank
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:finbank}
+    username: ${POSTGRES_USER:finbank}
+    password: ${POSTGRES_PASSWORD:finbank}
   jpa:
     hibernate:
       ddl-auto: update
@@ -25,4 +25,4 @@ management:
         include: health,info
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
