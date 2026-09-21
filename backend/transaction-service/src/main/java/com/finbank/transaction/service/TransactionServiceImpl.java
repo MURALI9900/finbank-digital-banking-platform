@@ -57,7 +57,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new DuplicateTransactionException("Transaction already exists for idempotency key");
         }
         try{
-            accountClient.post().uri("/api/v1/accounts/internal/balance-transaction")
+            accountClient.post().uri("/api/v1/accounts/internal/balance-transaction")\n                    .header("X-Service-Token", internalServiceToken)
                     .contentType(MediaType.APPLICATION_JSON).body(toBalanceRequest(saved)).retrieve().toBodilessEntity();
             saved.setStatus(TransactionStatus.SUCCESS);
         }catch(Exception ex){
