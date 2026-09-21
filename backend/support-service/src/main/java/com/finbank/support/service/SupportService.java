@@ -1,0 +1,3 @@
+package com.finbank.support.service;
+import com.finbank.support.dto.*;import com.finbank.support.entity.SupportStatus;import java.util.List;
+public interface SupportService{TicketResponse create(CreateTicketRequest r);TicketResponse get(String ref);List<TicketResponse> customerTickets(String customer);List<TicketResponse> byStatus(SupportStatus status);TicketResponse update(String ref,UpdateTicketRequest r);}
