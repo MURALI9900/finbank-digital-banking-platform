@@ -1,0 +1,3 @@
+package com.finbank.loan.repository;
+import com.finbank.loan.entity.LoanRepayment; import org.springframework.data.jpa.repository.JpaRepository; import java.util.*;
+public interface LoanRepaymentRepository extends JpaRepository<LoanRepayment,Long>{Optional<LoanRepayment> findByRepaymentReference(String reference);List<LoanRepayment> findByLoanReferenceOrderByInstallmentNumberAsc(String loanReference);}
