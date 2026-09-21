@@ -17,7 +17,7 @@ server:
 
 finbank:
   services:
-    transaction-url: http://localhost:8083
+    transaction-url: ${FINBANK_TRANSACTION_SERVICE_URL:http://localhost:8083}
 
 management:
   endpoints:
