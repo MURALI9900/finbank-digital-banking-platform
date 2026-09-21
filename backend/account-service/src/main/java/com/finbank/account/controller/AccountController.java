@@ -40,7 +40,10 @@ public class AccountController {
 
     @PostMapping("/internal/balance-transaction")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void applyBalanceTransaction(@RequestHeader(value = "X-Service-Token", required = false) String serviceToken, @Valid @RequestBody BalanceTransactionRequest request){\n        if(serviceToken==null || !serviceToken.equals(internalServiceToken)) throw new AccessDeniedException("Internal service authentication required");\n        accountService.applyBalanceTransaction(request);\n    }
+    public void applyBalanceTransaction(@RequestHeader(value = "X-Service-Token", required = false) String serviceToken, @Valid @RequestBody BalanceTransactionRequest request){
+        if(serviceToken==null || !serviceToken.equals(internalServiceToken)) throw new AccessDeniedException("Internal service authentication required");
+        accountService.applyBalanceTransaction(request);
+    }
 
     private boolean isCustomer(Authentication authentication){return authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_CUSTOMER"));}
     private String customer(Authentication authentication){
