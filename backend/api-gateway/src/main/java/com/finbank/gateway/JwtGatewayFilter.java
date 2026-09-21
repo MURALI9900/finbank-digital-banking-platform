@@ -35,8 +35,6 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
             Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(header.substring(7)).getPayload();
             String role = claims.get("role", String.class);
             if (!isAllowed(path, role)) return reject(exchange, HttpStatus.FORBIDDEN);
-            if (path.startsWith("/api/v1/loans/") && isCustomerWriteOperation(path, exchange.getRequest().getMethod().name())
-                    && "CUSTOMER".equals(role)) return chain.filter(exchange);
             return chain.filter(exchange);
         } catch (Exception ex) {
             return reject(exchange, HttpStatus.UNAUTHORIZED);
