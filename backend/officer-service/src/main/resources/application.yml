@@ -16,6 +16,8 @@ server:
   port: 8086
 
 finbank:
+  internal:
+    service-token: ${FINBANK_INTERNAL_SERVICE_TOKEN:dev-internal-token}
   services:
     beneficiary-url: ${FINBANK_BENEFICIARY_SERVICE_URL:http://localhost:8084}
     kyc-url: ${FINBANK_KYC_SERVICE_URL:http://localhost:8087}
