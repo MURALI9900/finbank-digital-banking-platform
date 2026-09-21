@@ -18,10 +18,10 @@ public class OfficerServiceImpl implements OfficerService {
     private final RestClient beneficiaryClient;
     private final RestClient kycClient;
 
-    public OfficerServiceImpl(OfficerRepository officerRepository,OfficerReviewRepository reviewRepository,RestClient.Builder builder){
+    public OfficerServiceImpl(OfficerRepository officerRepository,OfficerReviewRepository reviewRepository,RestClient.Builder builder, @org.springframework.beans.factory.annotation.Value("${finbank.services.beneficiary-url:http://localhost:8084}") String beneficiaryServiceUrl, @org.springframework.beans.factory.annotation.Value("${finbank.services.kyc-url:http://localhost:8087}") String kycServiceUrl){
         this.officerRepository=officerRepository; this.reviewRepository=reviewRepository;
-        this.beneficiaryClient=builder.baseUrl("http://localhost:8084").build();
-        this.kycClient=builder.baseUrl("http://localhost:8087").build();
+        this.beneficiaryClient=builder.baseUrl(beneficiaryServiceUrl).build();
+        this.kycClient=builder.baseUrl(kycServiceUrl).build();
     }
 
     @Override @Transactional
