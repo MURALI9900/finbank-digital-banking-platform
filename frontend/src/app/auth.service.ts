@@ -7,7 +7,7 @@ export interface AuthResponse { accessToken:string; tokenType:string; expiresIn:
 @Injectable({providedIn:'root'})
 export class AuthService {
   private http=inject(HttpClient);
-  private readonly baseUrl='http://localhost:8080/api/v1/auth';
+  private readonly baseUrl='/api/v1/auth';
   login(username:string,password:string):Observable<AuthResponse>{
     return this.http.post<AuthResponse>(`${this.baseUrl}/login`,{username,password}).pipe(tap(r=>localStorage.setItem('finbank_auth',JSON.stringify(r))));
   }
