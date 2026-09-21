@@ -55,7 +55,7 @@ class TransactionServiceImplTest {
         when(accountClient.post()).thenReturn(requestBodyUriSpec);
         when(requestBodyUriSpec.uri("/api/v1/accounts/internal/balance-transaction")).thenReturn(requestBodySpec);
         when(requestBodySpec.contentType(MediaType.APPLICATION_JSON)).thenReturn(requestBodySpec);
-        when(requestBodySpec.body(any(TransactionServiceImpl.BalanceTransactionPayload.class))).thenReturn(requestBodySpec);
+        when(requestBodySpec.body(any(Object.class))).thenReturn(requestBodySpec);
         when(requestBodySpec.retrieve()).thenReturn(responseSpec);
         when(responseSpec.toBodilessEntity()).thenReturn(null);
 
