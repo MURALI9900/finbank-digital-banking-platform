@@ -28,6 +28,7 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
         if (path.startsWith("/api/v1/auth/") || path.startsWith("/actuator/")) return chain.filter(exchange);
+        if (path.startsWith("/api/v1/accounts/internal/")) return reject(exchange, HttpStatus.FORBIDDEN);
         String header = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (header == null || !header.startsWith("Bearer ")) return reject(exchange, HttpStatus.UNAUTHORIZED);
         try {
