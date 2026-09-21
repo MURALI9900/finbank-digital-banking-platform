@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS auth_users (id bigserial PRIMARY KEY, username varchar(100) NOT NULL UNIQUE, password varchar(255) NOT NULL, role varchar(20) NOT NULL, status varchar(20) NOT NULL, customer_number varchar(20) UNIQUE, created_at timestamp NOT NULL);
