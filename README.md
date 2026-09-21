@@ -1,17 +1,25 @@
 # FinBank — Digital Banking & Financial Services Platform
 
-FinBank is a production-style digital banking application designed to demonstrate modern Java full-stack and enterprise application development.
+FinBank is a production-style digital banking application built to demonstrate modern Java full-stack, microservice, security, and enterprise application development.
 
 ## Project Overview
 
-The platform supports two primary user roles:
+The platform provides customer banking capabilities and backend services for bank operations. The current implementation includes:
 
-- Customer
-- Bank Officer
+- Customer registration and JWT login
+- Customer profile access
+- Account management and balances
+- Deposits, withdrawals, and fund transfers
+- Transaction history and idempotent transaction processing
+- Beneficiary management
+- Loan applications and loan repayment APIs
+- KYC applications and document management
+- Customer support/service tickets
+- Officer review workflows
+- Notification and audit backend services
+- API Gateway with role-based access control
 
-Customers can manage accounts, perform banking transactions, manage beneficiaries, view statements, apply for loans, raise service requests, and receive notifications.
-
-Bank officers can onboard customers, manage KYC verification, review transactions, process service requests, review loan applications, and access operational reports.
+The customer-facing Angular application currently covers authentication, dashboard, accounts, transactions, beneficiaries, loans, KYC, and support.
 
 ## Key Features
 
@@ -20,39 +28,28 @@ Bank officers can onboard customers, manage KYC verification, review transaction
 - Customer registration and login
 - JWT-based authentication
 - Customer dashboard
-- Savings and current accounts
-- Account balance and account details
+- Account creation and account details
+- Account balance and available balance
 - Deposits and withdrawals
 - Fund transfers
-- Beneficiary management
 - Transaction history
-- Account statements
-- Scheduled transfers
-- Bill payments
-- Notifications
-- Profile and KYC information
-- Card management
-- Service requests
+- Beneficiary management
 - Loan applications
+- KYC application and document submission
+- Customer service requests and complaints
 - Loan repayment tracking
 
 ### Bank Officer Operations
 
-- Secure officer login
-- Customer search and profile management
-- Customer onboarding
-- KYC verification
-- Account opening and closure
-- Transaction assistance
-- Transaction review and approval
-- Beneficiary approval
-- Loan application review
-- Loan approval workflow
-- Loan repayment monitoring
-- Service request management
-- Customer complaint management
-- Operational reports
-- Audit history
+- Officer management and secure role-based APIs
+- Customer lookup and profile access
+- Review workflow management
+- Pending review retrieval
+- Beneficiary approval workflow
+- Loan review and decision workflow
+- KYC review workflow
+- Support ticket management
+- Audit and notification backend capabilities
 
 ## Enterprise Features
 
@@ -62,7 +59,6 @@ Bank officers can onboard customers, manage KYC verification, review transaction
 - DTO-based API design
 - Global exception handling
 - Request validation
-- Pagination and sorting
 - Transaction reference generation
 - Idempotent transaction processing
 - Optimistic locking
@@ -71,9 +67,9 @@ Bank officers can onboard customers, manage KYC verification, review transaction
 - Notification service
 - API Gateway
 - Microservice architecture
-- Database migrations
+- Flyway database migrations
 - Swagger/OpenAPI documentation
-- Unit and integration testing
+- Unit testing with JUnit and Mockito
 - Docker containerization
 - Docker Compose
 - GitHub Actions CI/CD
@@ -92,11 +88,10 @@ Bank officers can onboard customers, manage KYC verification, review transaction
 
 ### Frontend
 
-- Angular
+- Angular 22
 - TypeScript
 - HTML5
 - CSS3
-- Bootstrap
 
 ### Database
 
@@ -124,28 +119,39 @@ Bank officers can onboard customers, manage KYC verification, review transaction
                             |
                        API Gateway
                             |
-          +-----------------+-----------------+
-          |                 |                 |
-     Customer Service  Account Service  Transaction Service
-          |                 |                 |
-          +-----------------+-----------------+
+       +--------------------+--------------------+
+       |                    |                    |
+  Customer Service     Account Service     Transaction Service
+       |                    |                    |
+       +--------------------+--------------------+
                             |
                        PostgreSQL
                             |
                           Kafka
-                            |
-                 +----------+----------+
-                 |                     |
-          Notification Service    Audit Service
+                     +------+------+
+                     |             |
+              Notification      Audit
+                Service         Service
 
-                 Officer / Admin Services
-                            |
-                  +---------+---------+
-                  |                   |
-             KYC Service        Loan Service
-                  |
-             Support Service
+       Beneficiary | Auth | Officer | KYC | Loan | Support
 ```
+
+## Microservices
+
+The backend is split into 12 services:
+
+1. Customer Service
+2. Account Service
+3. Transaction Service
+4. Beneficiary Service
+5. Auth Service
+6. Officer Service
+7. KYC Service
+8. Loan Service
+9. Support Service
+10. Notification Service
+11. Audit Service
+12. API Gateway
 
 ## Running the Platform
 
@@ -155,20 +161,47 @@ Bank officers can onboard customers, manage KYC verification, review transaction
 docker compose up --build
 ```
 
+Services:
+
 - Frontend: http://localhost:4200
 - API Gateway: http://localhost:8080
 - Kafka UI: http://localhost:8099
 - PostgreSQL: localhost:5432
 
-The Angular frontend uses the gateway through `/api/v1`. In Docker, Nginx proxies `/api/` to the API Gateway. For local Angular development, run `npm install` and `npm start` from `frontend/`; the Angular proxy forwards `/api` to `http://localhost:8080`.
+The Angular frontend uses the gateway through `/api/v1`. In Docker, Nginx proxies `/api/` to the API Gateway. For local Angular development:
+
+```bash
+cd frontend
+npm install
+npm start
+```
+
+The Angular development proxy forwards `/api` requests to `http://localhost:8080`.
 
 ### API Documentation
 
-Each backend service exposes Swagger UI at `/swagger-ui/index.html` on its service port.
+Backend services expose Swagger UI at:
+
+```
+http://localhost:<service-port>/swagger-ui/index.html
+```
+
+The API Gateway runs on port 8080 and routes requests to the individual backend services.
+
+## CI/CD
+
+GitHub Actions validates:
+
+- Maven builds for all backend services
+- Angular production build
+- Docker Compose configuration
+- Docker image builds for all backend services
+
+The current CI pipeline is passing across backend, frontend, and Docker validation/build jobs.
 
 ## Project Goals
 
-The project demonstrates how a real-world financial application can be designed using secure APIs, modular services, transactional processing, event-driven communication, database persistence, automated testing, and containerized deployment.
+This project demonstrates how a real-world financial application can be designed using secure APIs, modular services, transactional processing, event-driven communication, database persistence, automated testing, and containerized deployment.
 
 This is a fictional learning and portfolio project. It does not contain proprietary code, credentials, customer information, or business logic from any financial institution.
 
