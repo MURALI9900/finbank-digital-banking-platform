@@ -160,7 +160,7 @@ public class LoanServiceImpl implements LoanService {
 
     private record TransactionResponse(String transactionReference, String idempotencyKey, String customerNumber,
                                        String sourceAccountNumber, String destinationAccountNumber,
-                                       String type, com.finbank.transaction.entity.TransactionStatus status,
+                                       String type, String status,
                                        BigDecimal amount, String currency, String description,
                                        java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {}
 }
