@@ -82,7 +82,7 @@ public class LoanServiceImpl implements LoanService {
                 loan.getCustomerNumber(), null, r.destinationAccountNumber().trim(), "DEPOSIT",
                 loan.getRequestedAmount(), r.currency().trim().toUpperCase(),
                 "Loan disbursement " + loan.getApplicationReference(), "LOAN-DISBURSE-" + loan.getApplicationReference()));
-        if (!"SUCCESS".equals(transaction.status().name())) throw new LoanException("Loan disbursement transaction failed");
+        if (!"SUCCESS".equals(transaction.status())) throw new LoanException("Loan disbursement transaction failed");
         loan.setStatus(LoanStatus.DISBURSED);
         loan.setDisbursedAt(java.time.LocalDateTime.now());
         return toLoanResponse(loanRepository.save(loan));
