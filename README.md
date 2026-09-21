@@ -147,6 +147,25 @@ Bank officers can onboard customers, manage KYC verification, review transaction
              Support Service
 ```
 
+## Running the Platform
+
+### Docker Compose
+
+```bash
+docker compose up --build
+```
+
+- Frontend: http://localhost:4200
+- API Gateway: http://localhost:8080
+- Kafka UI: http://localhost:8099
+- PostgreSQL: localhost:5432
+
+The Angular frontend uses the gateway through `/api/v1`. In Docker, Nginx proxies `/api/` to the API Gateway. For local Angular development, run `npm install` and `npm start` from `frontend/`; the Angular proxy forwards `/api` to `http://localhost:8080`.
+
+### API Documentation
+
+Each backend service exposes Swagger UI at `/swagger-ui/index.html` on its service port.
+
 ## Project Goals
 
 The project demonstrates how a real-world financial application can be designed using secure APIs, modular services, transactional processing, event-driven communication, database persistence, automated testing, and containerized deployment.
