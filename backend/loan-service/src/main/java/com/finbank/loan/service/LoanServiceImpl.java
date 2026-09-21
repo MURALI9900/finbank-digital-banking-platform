@@ -21,14 +21,14 @@ public class LoanServiceImpl implements LoanService {
     private final RestClient transactionClient;
 
     public LoanServiceImpl(LoanApplicationRepository loanRepository, LoanRepaymentRepository repaymentRepository) {
-        this(loanRepository, repaymentRepository, RestClient.builder());
+        this(loanRepository, repaymentRepository, RestClient.builder(), "http://localhost:8083");
     }
 
     public LoanServiceImpl(LoanApplicationRepository loanRepository, LoanRepaymentRepository repaymentRepository,
-                           RestClient.Builder restClientBuilder) {
+                           RestClient.Builder restClientBuilder, @org.springframework.beans.factory.annotation.Value("${finbank.services.transaction-url:http://localhost:8083}") String transactionServiceUrl) {
         this.loanRepository = loanRepository;
         this.repaymentRepository = repaymentRepository;
-        this.transactionClient = restClientBuilder.baseUrl("http://localhost:8083").build();
+        this.transactionClient = restClientBuilder.baseUrl(transactionServiceUrl).build();
     }
 
     @Override
