@@ -5,7 +5,6 @@ import com.finbank.loan.entity.*;
 import com.finbank.loan.exception.LoanException;
 import com.finbank.loan.repository.LoanApplicationRepository;
 import com.finbank.loan.repository.LoanRepaymentRepository;
-import com.finbank.transaction.entity.TransactionType;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -80,7 +79,7 @@ public class LoanServiceImpl implements LoanService {
         LoanApplication loan = findLoan(ref);
         if (loan.getStatus() != LoanStatus.APPROVED) throw new LoanException("Only approved loans can be disbursed");
         TransactionResponse transaction = createTransaction(new TransactionRequest(
-                loan.getCustomerNumber(), null, r.destinationAccountNumber().trim(), TransactionType.DEPOSIT,
+                loan.getCustomerNumber(), null, r.destinationAccountNumber().trim(), "DEPOSIT",
                 loan.getRequestedAmount(), r.currency().trim().toUpperCase(),
                 "Loan disbursement " + loan.getApplicationReference(), "LOAN-DISBURSE-" + loan.getApplicationReference()));
         if (!"SUCCESS".equals(transaction.status().name())) throw new LoanException("Loan disbursement transaction failed");
@@ -117,7 +116,7 @@ public class LoanServiceImpl implements LoanService {
             throw new LoanException("Source account number is required");
         if (r.amount().compareTo(repayment.getDueAmount()) > 0) throw new LoanException("Payment cannot exceed due amount");
         TransactionResponse transaction = createTransaction(new TransactionRequest(
-                loan.getCustomerNumber(), r.sourceAccountNumber().trim(), null, TransactionType.WITHDRAWAL,
+                loan.getCustomerNumber(), r.sourceAccountNumber().trim(), null, "WITHDRAWAL",
                 r.amount(), r.currency().trim().toUpperCase(),
                 "Loan repayment " + repayment.getRepaymentReference(), "LOAN-REPAY-" + repayment.getRepaymentReference()));
         if (!"SUCCESS".equals(transaction.status().name())) throw new LoanException("Loan repayment transaction failed");
@@ -161,7 +160,7 @@ public class LoanServiceImpl implements LoanService {
 
     private record TransactionResponse(String transactionReference, String idempotencyKey, String customerNumber,
                                        String sourceAccountNumber, String destinationAccountNumber,
-                                       TransactionType type, com.finbank.transaction.entity.TransactionStatus status,
+                                       String type, com.finbank.transaction.entity.TransactionStatus status,
                                        BigDecimal amount, String currency, String description,
                                        java.time.LocalDateTime createdAt, java.time.LocalDateTime updatedAt) {}
 }
