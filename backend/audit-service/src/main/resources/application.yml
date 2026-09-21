@@ -19,3 +19,6 @@ management:
   endpoint:
     health:
       show-details: never
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
