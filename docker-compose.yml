@@ -49,6 +49,134 @@ services:
       KAFKA_CLUSTERS_0_NAME: finbank
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
 
+  auth-service:
+    build: { context: ., args: { SERVICE: auth-service } }
+    environment:
+      POSTGRES_HOST: postgres
+      FINBANK_JWT_SECRET: ${FINBANK_JWT_SECRET:-finbank-development-secret-key-change-in-production-256-bits}
+    ports: ["8085:8085"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  customer-service:
+    build: { context: ., args: { SERVICE: customer-service } }
+    environment:
+      POSTGRES_HOST: postgres
+    ports: ["8081:8081"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  account-service:
+    build: { context: ., args: { SERVICE: account-service } }
+    environment:
+      POSTGRES_HOST: postgres
+    ports: ["8082:8082"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  transaction-service:
+    build: { context: ., args: { SERVICE: transaction-service } }
+    environment:
+      POSTGRES_HOST: postgres
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      FINBANK_ACCOUNT_SERVICE_URL: http://account-service:8082
+      FINBANK_INTERNAL_SERVICE_TOKEN: ${FINBANK_INTERNAL_SERVICE_TOKEN:-dev-internal-token}
+    ports: ["8083:8083"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  beneficiary-service:
+    build: { context: ., args: { SERVICE: beneficiary-service } }
+    environment:
+      POSTGRES_HOST: postgres
+    ports: ["8084:8084"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  officer-service:
+    build: { context: ., args: { SERVICE: officer-service } }
+    environment:
+      POSTGRES_HOST: postgres
+      FINBANK_BENEFICIARY_SERVICE_URL: http://beneficiary-service:8084
+      FINBANK_KYC_SERVICE_URL: http://kyc-service:8087
+      FINBANK_INTERNAL_SERVICE_TOKEN: ${FINBANK_INTERNAL_SERVICE_TOKEN:-dev-internal-token}
+    ports: ["8086:8086"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  kyc-service:
+    build: { context: ., args: { SERVICE: kyc-service } }
+    environment:
+      POSTGRES_HOST: postgres
+    ports: ["8087:8087"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  loan-service:
+    build: { context: ., args: { SERVICE: loan-service } }
+    environment:
+      POSTGRES_HOST: postgres
+      FINBANK_TRANSACTION_SERVICE_URL: http://transaction-service:8083
+      FINBANK_INTERNAL_SERVICE_TOKEN: ${FINBANK_INTERNAL_SERVICE_TOKEN:-dev-internal-token}
+    ports: ["8088:8088"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  support-service:
+    build: { context: ., args: { SERVICE: support-service } }
+    environment:
+      POSTGRES_HOST: postgres
+    ports: ["8089:8089"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  notification-service:
+    build: { context: ., args: { SERVICE: notification-service } }
+    environment:
+      POSTGRES_HOST: postgres
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports: ["8090:8090"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  audit-service:
+    build: { context: ., args: { SERVICE: audit-service } }
+    environment:
+      POSTGRES_HOST: postgres
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports: ["8091:8091"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  api-gateway:
+    build: { context: ., args: { SERVICE: api-gateway } }
+    environment:
+      FINBANK_JWT_SECRET: ${FINBANK_JWT_SECRET:-finbank-development-secret-key-change-in-production-256-bits}
+      FINBANK_CUSTOMER_SERVICE_URL: http://customer-service:8081
+      FINBANK_ACCOUNT_SERVICE_URL: http://account-service:8082
+      FINBANK_TRANSACTION_SERVICE_URL: http://transaction-service:8083
+      FINBANK_BENEFICIARY_SERVICE_URL: http://beneficiary-service:8084
+      FINBANK_AUTH_SERVICE_URL: http://auth-service:8085
+      FINBANK_OFFICER_SERVICE_URL: http://officer-service:8086
+      FINBANK_KYC_SERVICE_URL: http://kyc-service:8087
+      FINBANK_LOAN_SERVICE_URL: http://loan-service:8088
+      FINBANK_SUPPORT_SERVICE_URL: http://support-service:8089
+      FINBANK_NOTIFICATION_SERVICE_URL: http://notification-service:8090
+      FINBANK_AUDIT_SERVICE_URL: http://audit-service:8091
+    ports: ["8080:8080"]
+    depends_on:
+      - auth-service
+      - customer-service
+      - account-service
+      - transaction-service
+      - beneficiary-service
+      - officer-service
+      - kyc-service
+      - loan-service
+      - support-service
+      - notification-service
+      - audit-service
+
 volumes:
   finbank-postgres-data:
   finbank-kafka-data:
