@@ -1,0 +1,3 @@
+package com.finbank.loan.dto;
+import com.finbank.loan.entity.LoanType; import jakarta.validation.constraints.*; import java.math.BigDecimal;
+public record CreateLoanRequest(@NotBlank String customerNumber,@NotNull LoanType loanType,@NotNull @DecimalMin("1000.00") @Digits(integer=17,fraction=2) BigDecimal requestedAmount,@NotNull @Min(1) @Max(360) Integer tenureMonths,@DecimalMin("0.00") @Digits(integer=4,fraction=3) BigDecimal annualInterestRate,String purpose){}
