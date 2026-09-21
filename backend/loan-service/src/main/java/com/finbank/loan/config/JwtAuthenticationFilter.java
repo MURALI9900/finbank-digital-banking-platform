@@ -18,11 +18,26 @@ import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
- private final SecretKey key;
- public JwtAuthenticationFilter(@Value("${app.jwt.secret}") String secret){key=Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));}
- protected void doFilterInternal(HttpServletRequest request,HttpServletResponse response,FilterChain chain)throws ServletException,IOException{
-  String h=request.getHeader("Authorization");
-  if(h!=null&&h.startsWith("Bearer ")){try{Claims c=Jwts.parser().verifyWith(key).build().parseSignedClaims(h.substring(7)).getPayload();String r=c.get("role",String.class);if(c.getSubject()!=null&&r!=null)SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(c.getSubject(),null,List.of(new SimpleGrantedAuthority("ROLE_"+r))));}catch(Exception e){SecurityContextHolder.clearContext();}}
-  chain.doFilter(request,response);
- }
+    private final SecretKey key;
+    public JwtAuthenticationFilter(@Value("${app.jwt.secret}") String secret) {
+        key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
+        String h = request.getHeader("Authorization");
+        if (h != null && h.startsWith("Bearer ")) {
+            try {
+                Claims c = Jwts.parser().verifyWith(key).build().parseSignedClaims(h.substring(7)).getPayload();
+                String r = c.get("role", String.class);
+                String customerNumber = c.get("customerNumber", String.class);
+                if (c.getSubject() != null && r != null) {
+                    String principal = c.getSubject() + "|" + (customerNumber == null ? "" : customerNumber);
+                    SecurityContextHolder.getContext().setAuthentication(
+                            new UsernamePasswordAuthenticationToken(principal, null, List.of(new SimpleGrantedAuthority("ROLE_" + r))));
+                }
+            } catch (Exception e) {
+                SecurityContextHolder.clearContext();
+            }
+        }
+        chain.doFilter(request, response);
+    }
 }
