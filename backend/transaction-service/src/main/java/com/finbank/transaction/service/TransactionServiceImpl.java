@@ -23,10 +23,10 @@ public class TransactionServiceImpl implements TransactionService {
     private final RestClient accountClient;
 
     public TransactionServiceImpl(BankTransactionRepository repository,KafkaTemplate<String,TransactionEvent> kafkaTemplate,
-                                  RestClient.Builder restClientBuilder){
+                                  RestClient.Builder restClientBuilder,@org.springframework.beans.factory.annotation.Value("${finbank.services.account-url:http://localhost:8082}") String accountServiceUrl){
         this.repository=repository;
         this.kafkaTemplate=kafkaTemplate;
-        this.accountClient=restClientBuilder.baseUrl("http://localhost:8082").build();
+        this.accountClient=restClientBuilder.baseUrl(accountServiceUrl).build();
     }
 
     @Override @Transactional
