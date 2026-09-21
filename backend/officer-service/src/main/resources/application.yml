@@ -27,3 +27,6 @@ management:
     web:
       exposure:
         include: health,info
+app:
+  jwt:
+    secret: ${FINBANK_JWT_SECRET:finbank-development-secret-key-change-in-production-256-bits}
