@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
-export interface AuthResponse { accessToken:string; tokenType:string; expiresIn:number; username:string; role:string; }
+export interface AuthResponse { accessToken:string; tokenType:string; expiresIn:number; username:string; role:string; customerNumber?:string; }
 
 @Injectable({providedIn:'root'})
 export class AuthService {
@@ -17,4 +17,5 @@ export class AuthService {
   logout(){localStorage.removeItem('finbank_auth');}
   session():AuthResponse|null { const raw=localStorage.getItem('finbank_auth'); return raw?JSON.parse(raw):null; }
   token(){return this.session()?.accessToken ?? null;}
+  customerNumber(){return this.session()?.customerNumber || '';}
 }
