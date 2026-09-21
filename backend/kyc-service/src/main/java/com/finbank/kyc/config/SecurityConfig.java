@@ -8,6 +8,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration public class SecurityConfig {
  @Bean SecurityFilterChain securityFilterChain(HttpSecurity http,JwtAuthenticationFilter jwt)throws Exception{
-  http.csrf(c->c.disable()).sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).authorizeHttpRequests(a->a.requestMatchers("/actuator/health","/actuator/info").permitAll().anyRequest().hasAnyRole("CUSTOMER","OFFICER","ADMIN")).addFilterBefore(jwt,UsernamePasswordAuthenticationFilter.class); return http.build();
+  http.csrf(c->c.disable()).sessionManagement(s->s.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).authorizeHttpRequests(a->a.requestMatchers("/actuator/health","/actuator/info").permitAll()\n   .requestMatchers("/api/v1/kyc/applications/internal/**").permitAll().anyRequest().hasAnyRole("CUSTOMER","OFFICER","ADMIN")).addFilterBefore(jwt,UsernamePasswordAuthenticationFilter.class); return http.build();
  }
 }
